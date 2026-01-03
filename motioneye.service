@@ -1,0 +1,12 @@
+[Unit]
+Description=motionEye Server
+After=network.target
+
+[Service]
+ExecStart=/opt/motioneye/bin/meyectl startserver -c /etc/motioneye/motioneye.conf
+ExecStop=/opt/motioneye/bin/meyectl stopserver
+Type=simple
+User=root
+
+[Install]
+WantedBy=multi-user.target

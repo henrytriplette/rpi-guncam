@@ -55,26 +55,53 @@ install_packages() {
     apt-get upgrade -y -q
 
     dialog --infobox "Installing required packages..." 5 60
-    apt-get install -y -q python3-dev gcc libjpeg62-turbo-dev libcurl4-openssl-dev libssl-dev ca-certificates curl
+    apt-get install -y -q gcc python3 python3-pip python3-dev libssl-dev libcurl4-openssl-dev libjpeg-dev libjpeg62-turbo-dev libz-dev ffmpeg v4l-utils ca-certificates curl
 
     dialog --infobox "Installing PIP..." 5 60
     apt-get install -y -q python3-pip
 
-    dialog --infobox "Installing Python dependencies..." 5 60
-    pip3 install 'https://github.com/motioneye-project/motioneye/archive/dev.tar.gz'
+    dialog --infobox "Upgrading PIP..." 5 60
+    python3 -m pip install --upgrade pip
+
+    dialog --msgbox "All required software has been installed. Installing motionEye next..." 7 60
 }
 
 motioneye_install() {
-    dialog --infobox "Initializing motionEye..." 5 60
+    dialog --infobox "Disabling default motion service..." 5 60
+    sudo systemctl stop motion
+    sudo systemctl disable motion
+
+    dialog --infobox "Installing motion virtual environment..." 5 60
+    sudo mkdir -p /opt/motioneye
+    sudo python3 -m venv /opt/motioneye
+    # source /opt/motioneye/bin/activate
+
+    dialog --infobox "Upgrading PIP in virtual environment..." 5 60
     sleep 2
     clear
-    motioneye_init
-    # mkdir -p /etc/motioneye
-    # mkdir -p /var/lib/motioneye
-    # cp /usr/local/share/motioneye/extra/motioneye.conf.sample /etc/motioneye/motioneye.conf
-    # motioneye_initdb -d /var/lib/motioneye
-    # systemctl enable motioneye
-    # systemctl start motioneye
+    sudo /opt/motioneye/bin/pip install --upgrade pip
+
+    dialog --infobox "Installing motionEye..." 5 60
+    sudo /opt/motioneye/bin/pip install motioneye
+
+    dialog --infobox "Create config directories..." 5 60
+    sudo mkdir -p /etc/motioneye
+    sudo mkdir -p /var/lib/motioneye
+
+    dialog --infobox "Copy sample config..." 5 60
+    sudo cp /opt/motioneye/lib/python3*/site-packages/motioneye/extra/motioneye.conf.sample /etc/motioneye/motioneye.conf
+
+    dialog --infobox "Copying motionEye service files..." 5 60
+    sleep 2
+    clear
+    sudo cp motioneye.service /etc/systemd/system/motioneye.service
+
+    dialog --infobox "Finalizing motionEye service..." 5 60
+    sudo systemctl daemon-reload
+    sudo systemctl enable motioneye
+    sudo systemctl start motioneye
+
+    dialog --msgbox "motionEye installation and setup complete!\n\nAccess the web interface at http://<RPI_IP_ADDRESS>:8765\n\nDefault credentials are admin with no password." 10 60
 }
 
 # ---------------- Final Setup ----------------

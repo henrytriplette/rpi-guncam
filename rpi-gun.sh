@@ -60,46 +60,15 @@ install_packages() {
     dialog --infobox "Installing PIP..." 5 60
     apt-get install -y -q python3-pip
 
-    dialog --infobox "Upgrading PIP..." 5 60
-    python3 -m pip install --upgrade pip
-
     dialog --msgbox "All required software has been installed. Installing motionEye next..." 7 60
 }
 
 motioneye_install() {
-    dialog --infobox "Disabling default motion service..." 5 60
-    sudo systemctl stop motion
-    sudo systemctl disable motion
-
-    dialog --infobox "Installing motion virtual environment..." 5 60
-    sudo mkdir -p /opt/motioneye
-    sudo python3 -m venv /opt/motioneye
-    # source /opt/motioneye/bin/activate
-
-    dialog --infobox "Upgrading PIP in virtual environment..." 5 60
-    sleep 2
-    clear
-    sudo /opt/motioneye/bin/pip install --upgrade pip
-
     dialog --infobox "Installing motionEye..." 5 60
-    sudo /opt/motioneye/bin/pip install motioneye
+    sudo pip3 install 'https://github.com/motioneye-project/motioneye/archive/dev.tar.gz' --break-system-packages
 
     dialog --infobox "Create config directories..." 5 60
-    sudo mkdir -p /etc/motioneye
-    sudo mkdir -p /var/lib/motioneye
-
-    dialog --infobox "Copy sample config..." 5 60
-    sudo cp /opt/motioneye/lib/python3*/site-packages/motioneye/extra/motioneye.conf.sample /etc/motioneye/motioneye.conf
-
-    dialog --infobox "Copying motionEye service files..." 5 60
-    sleep 2
-    clear
-    sudo cp motioneye.service /etc/systemd/system/motioneye.service
-
-    dialog --infobox "Finalizing motionEye service..." 5 60
-    sudo systemctl daemon-reload
-    sudo systemctl enable motioneye
-    sudo systemctl start motioneye
+    sudo motioneye_init
 
     dialog --msgbox "motionEye installation and setup complete!\n\nAccess the web interface at http://<RPI_IP_ADDRESS>:8765\n\nDefault credentials are admin with no password." 10 60
 }

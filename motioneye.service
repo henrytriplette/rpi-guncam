@@ -9,3 +9,6 @@ LogsDirectory=motioneye
 StateDirectory=motioneye
 ExecStart=/usr/bin/libcamerify /usr/local/bin/meyectl startserver -c /etc/motioneye/motioneye.conf
 Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target

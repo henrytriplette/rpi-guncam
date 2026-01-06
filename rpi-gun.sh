@@ -55,7 +55,7 @@ install_packages() {
     apt-get upgrade -y -q
 
     dialog --infobox "Installing required packages..." 5 60
-    apt-get install -y -q gcc python3 python3-pip python3-dev libssl-dev libcurl4-openssl-dev libjpeg-dev libjpeg62-turbo-dev libz-dev ffmpeg v4l-utils ca-certificates curl
+    apt-get install -y -q gcc python3 python3-pip python3-dev libssl-dev libcurl4-openssl-dev libjpeg-dev libjpeg62-turbo-dev libz-dev ffmpeg v4l-utils ca-certificates curl libcamera-apps libcamera-v4l2 libcamera-tools
 
     dialog --infobox "Installing PIP..." 5 60
     apt-get install -y -q python3-pip
@@ -69,6 +69,36 @@ motioneye_install() {
 
     dialog --infobox "Create config directories..." 5 60
     sudo motioneye_init
+
+    # Inside
+    # /etc/systemd/system/motioneye.service
+    # Identify the following line:
+    # ExecStart=/usr/local/bin/meyectl startserver -c /etc/motioneye/motioneye.conf
+    # and change it with the following line:
+    # ExecStart=/usr/bin/libcamerify /usr/local/bin/meyectl startserver -c /etc/motioneye/motioneye.conf
+    dialog --infobox "Setting service..." 5 60
+    local service_file="/etc/systemd/system/motioneye.service"
+    local desired_exec="ExecStart=/usr/bin/libcamerify /usr/local/bin/meyectl startserver -c /etc/motioneye/motioneye.conf"
+
+    if [ ! -f "$service_file" ]; then
+        dialog --msgbox "Warning: $service_file not found. Please verify the motionEye installation." 8 60
+    else
+        if grep -q "^ExecStart=.*meyectl startserver" "$service_file"; then
+            tmpfile=$(mktemp)
+            awk -v replacement="$desired_exec" '
+                /^ExecStart=.*meyectl startserver/ { print replacement; next }
+                { print }
+            ' "$service_file" > "$tmpfile"
+            install -o root -g root -m 0644 "$tmpfile" "$service_file"
+            rm "$tmpfile"
+            systemctl daemon-reload
+            if ! systemctl restart motioneye; then
+                dialog --msgbox "Warning: motionEye service restart failed. Please check systemctl status motioneye." 8 70
+            fi
+        else
+            dialog --msgbox "Notice: ExecStart line not found in $service_file; no changes applied. Intervene manually." 8 70
+        fi
+    fi
 
     dialog --msgbox "motionEye installation and setup complete!\n\nAccess the web interface at http://<RPI_IP_ADDRESS>:8765\n\nDefault credentials are admin with no password." 10 60
 }

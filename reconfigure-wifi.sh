@@ -69,8 +69,8 @@ make_or_update_config() {
     COUNTRY="GB"
     HOME_SSID=""
     HOME_PASS=""
-    AP_SSID="PiAP-$(hostname)"
-    AP_PASS="ChangeMe1234"
+    AP_SSID="$(hostname)"
+    AP_PASS="12345678"
   fi
 
   # Country code
